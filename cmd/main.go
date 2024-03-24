@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,6 +12,10 @@ import (
 )
 
 func main() {
+	var port string
+	flag.StringVar(&port, "port", "8080", "help message for flag n")
+	flag.Parse()
+	fmt.Println(port)
 	redis := repository.CreateRedisRepository()
 	var conf *config.ConfigFloodControl
 	conf, err := config.New("../configuratiion/config.yml")
@@ -37,7 +42,7 @@ func main() {
 		fmt.Fprintf(w, "Разрешение: %t \n", res)
 	})
 	s := &http.Server{
-		Addr:    "127.0.0.1:8080",
+		Addr:    "127.0.0.1:" + port,
 		Handler: mux,
 	}
 	s.ListenAndServe()

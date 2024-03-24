@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -22,10 +23,10 @@ type RedisRepository struct {
 func (r *RedisRepository) Check(ctx context.Context, userID int64,
 	TimeLimit time.Duration, MaxQuantityQuery int) (bool, error) {
 	if values, err := redis.Bytes(r.data.Do("get", userID)); values != nil && err == nil {
-
 		out := Union{}
 		dec := gob.NewDecoder(bytes.NewReader(values))
 		err = dec.Decode(&out)
+		fmt.Println(out)
 		if err != nil {
 			return false, err
 		}
@@ -39,7 +40,7 @@ func (r *RedisRepository) Check(ctx context.Context, userID int64,
 			return true, nil
 		} else if out.TimeLimit.Before(time.Now()) {
 			var buff1 bytes.Buffer
-			out.TimeLimit = out.TimeLimit.Add(TimeLimit)
+			out.TimeLimit = time.Now().Add(TimeLimit)
 			out.QuantityQuery = 1
 			enc := gob.NewEncoder(&buff1)
 			enc.Encode(out)

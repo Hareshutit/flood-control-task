@@ -6,17 +6,19 @@ import (
 	"task/internal/config"
 	repository "task/internal/repository/redis"
 	"task/internal/usecase"
-	"time"
 )
 
 func main() {
 	redis := repository.CreateRedisRepository()
-	var conf config.ConfigFloodControl
-	conf.MaxQuantityQuery = 2
-	conf.TimeLimit = 10 * time.Second
-	fc := usecase.New(conf, &redis)
+	var conf *config.ConfigFloodControl
+	conf, err := config.New("../configuratiion/config.yml")
+	if err != nil {
+		panic(err)
+	}
+	fc := usecase.New(*conf, &redis)
 	ctx := context.Background()
-	fmt.Println(fc.Check(ctx, 11))
+	fmt.Println(*conf)
+	fmt.Println(fc.Check(ctx, 122))
 	// В идеале стоит добавить defer для очистки Redis после работы программы(если сделать серверный вариант)
 }
 

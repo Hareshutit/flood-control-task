@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -21,11 +22,13 @@ type RedisRepository struct {
 
 func (r *RedisRepository) Check(ctx context.Context, userID int64,
 	TimeLimit time.Duration, MaxQuantityQuery int) (bool, error) {
+	if values, err := redis.Bytes(r.data.Do("get", userID)); values != nil && err == nil {
 
-	if values, err := redis.Bytes(r.data.Do("smembers", userID)); values != nil && err == nil {
 		out := Union{}
 		dec := gob.NewDecoder(bytes.NewReader(values))
 		err = dec.Decode(&out)
+		fmt.Println(out)
+		fmt.Println(time.Now())
 		if err != nil {
 			return false, err
 		}
@@ -34,19 +37,20 @@ func (r *RedisRepository) Check(ctx context.Context, userID int64,
 			out.QuantityQuery = out.QuantityQuery + 1
 			enc := gob.NewEncoder(&buff1)
 			enc.Encode(out)
-			r.data.Do("set", out)
+			r.data.Do("set", userID, buff1.Bytes())
 			return true, nil
 		} else if out.TimeLimit.Before(time.Now()) {
+			fmt.Println(2)
 			var buff1 bytes.Buffer
 			out.TimeLimit = out.TimeLimit.Add(TimeLimit)
 			out.QuantityQuery = 1
 			enc := gob.NewEncoder(&buff1)
 			enc.Encode(out)
-			r.data.Do("set", out)
+			r.data.Do("set", userID, buff1.Bytes())
 			return true, nil
 		}
 		return false, errors.New("Spam")
-	} else if err != nil {
+	} else if err != nil && err != redis.ErrNil {
 		return false, err
 	}
 
@@ -57,9 +61,8 @@ func (r *RedisRepository) Check(ctx context.Context, userID int64,
 	}
 
 	enc := gob.NewEncoder(&buff)
-
 	enc.Encode(in)
-	_, err := redis.Bytes(r.data.Do("sadd", userID))
+	_, err := redis.Bytes(r.data.Do("set", userID, buff.Bytes()))
 	if err != nil {
 		return false, err
 	}

@@ -1,23 +1,10 @@
 version: "3.9"
 services:
-  service:
-    container_name: "service"
-    build: 
-      context: ../
-      dockerfile: ./deployments/check/Dockerfile
-    ports:
-      - 80:80
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - redis-network
-  
-  redis:
-    container_name: "redis"
+  redis-data:
+    container_name: "redis_data"
     image: redis
-    expose:
-      - "6379"
+    ports:
+      - 6379:6379
     healthcheck:
       test: ["CMD", "redis-cli","ping"]
     networks:

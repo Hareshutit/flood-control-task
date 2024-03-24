@@ -2,19 +2,22 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"task/internal/config"
 	repository "task/internal/repository/redis"
 	"task/internal/usecase"
+	"time"
 )
 
 func main() {
 	redis := repository.CreateRedisRepository()
 	var conf config.ConfigFloodControl
-	conf.MaxQuantityQuery = 20
-	conf.TimeLimit = 1111111
+	conf.MaxQuantityQuery = 2
+	conf.TimeLimit = 10 * time.Second
 	fc := usecase.New(conf, &redis)
 	ctx := context.Background()
-	fc.Check(ctx, 11)
+	fmt.Println(fc.Check(ctx, 11))
+	// В идеале стоит добавить defer для очистки Redis после работы программы(если сделать серверный вариант)
 }
 
 // FloodControl интерфейс, который нужно реализовать.

@@ -2,10 +2,19 @@ package main
 
 import (
 	"context"
+	"task/internal/config"
+	repository "task/internal/repository/redis"
+	"task/internal/usecase"
 )
 
 func main() {
-
+	redis := repository.CreateRedisRepository()
+	var conf config.ConfigFloodControl
+	conf.MaxQuantityQuery = 20
+	conf.TimeLimit = 1111111
+	fc := usecase.New(conf, &redis)
+	ctx := context.Background()
+	fc.Check(ctx, 11)
 }
 
 // FloodControl интерфейс, который нужно реализовать.

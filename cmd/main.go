@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strconv"
 	"task/internal/config"
 	repository "task/internal/repository/redis"
 	"task/internal/usecase"
@@ -17,9 +19,28 @@ func main() {
 	}
 	fc := usecase.New(*conf, &redis)
 	ctx := context.Background()
-	fmt.Println(*conf)
-	fmt.Println(fc.Check(ctx, 122))
-	// В идеале стоит добавить defer для очистки Redis после работы программы(если сделать серверный вариант)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/query", func(w http.ResponseWriter, r *http.Request) {
+		idS := r.URL.Query().Get("id")
+		if idS == "" {
+			fmt.Fprintf(w, "Неправильное id пользовавтеля\n")
+		}
+		id, err := strconv.ParseInt(idS, 10, 64)
+		if err != nil {
+			fmt.Fprintf(w, err.Error()+"\n")
+		}
+		res, err := fc.Check(ctx, id)
+		if err != nil {
+			fmt.Fprintf(w, err.Error()+"\n")
+		}
+		fmt.Fprintf(w, "Разрешение: %t \n", res)
+	})
+	s := &http.Server{
+		Addr:    "127.0.0.1:8080",
+		Handler: mux,
+	}
+	s.ListenAndServe()
 }
 
 // FloodControl интерфейс, который нужно реализовать.

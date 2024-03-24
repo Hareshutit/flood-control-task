@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -27,12 +26,11 @@ func (r *RedisRepository) Check(ctx context.Context, userID int64,
 		out := Union{}
 		dec := gob.NewDecoder(bytes.NewReader(values))
 		err = dec.Decode(&out)
-		fmt.Println(out)
-		fmt.Println(time.Now())
 		if err != nil {
 			return false, err
 		}
 		if out.TimeLimit.After(time.Now()) && out.QuantityQuery < MaxQuantityQuery {
+
 			var buff1 bytes.Buffer
 			out.QuantityQuery = out.QuantityQuery + 1
 			enc := gob.NewEncoder(&buff1)
@@ -40,7 +38,6 @@ func (r *RedisRepository) Check(ctx context.Context, userID int64,
 			r.data.Do("set", userID, buff1.Bytes())
 			return true, nil
 		} else if out.TimeLimit.Before(time.Now()) {
-			fmt.Println(2)
 			var buff1 bytes.Buffer
 			out.TimeLimit = out.TimeLimit.Add(TimeLimit)
 			out.QuantityQuery = 1

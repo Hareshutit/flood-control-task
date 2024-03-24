@@ -17,11 +17,13 @@
 Запускаем Redis:
 
 cd ./deployments
+
 docker compose up
 
 Запускаем приложение:
 
 cd ./cmd
+
 go run main.go
 
 # Способ взаимодействия
